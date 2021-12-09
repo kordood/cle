@@ -130,7 +130,12 @@ class Apk(Soot):
         callbacks = []
 
         for cls in cls_name:
-            components.append(self.classes[cls])
+            component = self.classes.get(cls)
+
+            if component is None:
+                continue
+
+            components.append(component)
             callbacks.extend(self.get_callbacks(cls, callback[component_kind]))
 
         return components, callbacks
@@ -213,9 +218,11 @@ class Apk(Soot):
             # TODO: implement this w/o the need of actually writing files to disk
             #       see https://github.com/angr/cle/issues/123
             tmp_dir = tempfile.mkdtemp()
+            namelist = apk.namelist()
             for lib in jni_libs:
                 apk_file = "lib/{jni_arch}/{lib_name}".format(jni_arch=jni_arch, lib_name=lib)
-                apk.extract(apk_file, path=tmp_dir)
+                if apk_file in namelist:
+                    apk.extract(apk_file, path=tmp_dir)
             jni_libs_ld_path = os.path.join(tmp_dir, 'lib', jni_arch)
 
             l.info("Extracted lib(s) to %s", jni_libs_ld_path)
